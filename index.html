@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>عجلة الحظ - GAMPET</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Tahoma', 'Cairo', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://www.transparenttextures.com/containers/75/75b5c3c7-7b1b-4c3e-8e3c-7b5c3e8e3c7e.png') repeat;
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            padding: 20px 20px 30px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+            max-width: 450px;
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .title h1 {
+            font-size: 2.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d4ff, #0066cc, #00d4ff, #0099ff);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 30px rgba(0,180,255,0.5);
+            letter-spacing: 2px;
+            animation: gradientShift 3s ease infinite, textGlow 2s ease-in-out infinite alternate;
+            position: relative;
+            display: inline-block;
+            padding: 0 20px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes textGlow {
+            0% { text-shadow: 0 0 10px rgba(0,180,255,0.3); }
+            100% { text-shadow: 0 0 30px rgba(0,180,255,0.8), 0 0 10px rgba(0,100,255,0.5); }
+        }
+
+        .title::before,
+        .title::after {
+            content: '⚡';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            opacity: 0.7;
+            animation: iconPulse 1.5s ease infinite;
+        }
+
+        .title::before {
+            left: 10px;
+        }
+
+        .title::after {
+            right: 10px;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { opacity: 0.4; transform: translateY(-50%) scale(1); }
+            50% { opacity: 1; transform: translateY(-50%) scale(1.2); }
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: -5px;
+            letter-spacing: 1px;
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 15px auto;
+        }
+
+        @media (min-width: 400px) {
+            .wheel-wrapper {
+                width: 320px;
+                height: 320px;
+            }
+        }
+
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transition: transform 4s cubic-bezier(0.2, 0.9, 0.1, 1.05);
+            box-shadow: 0 0 0 8px rgba(255,255,255,0.2), 0 0 0 12px rgba(0,0,0,0.2), 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .pointer {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            z-index: 20;
+            filter: drop-shadow(0 0 10px #00ccff);
+            animation: pointerGlow 1s ease-in-out infinite alternate;
+        }
+
+        .pointer svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        @keyframes pointerGlow {
+            0% { filter: drop-shadow(0 0 5px #00ccff); }
+            100% { filter: drop-shadow(0 0 20px #00ccff) drop-shadow(0 0 5px #ffffff); }
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #fff 0%, #ddd 100%);
+            border-radius: 50%;
+            z-index: 15;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 0 4px rgba(0,0,0,0.2), 0 0 0 8px rgba(255,255,255,0.3);
+            overflow: hidden;
+        }
+
+        .wheel-center img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+
+        button {
+            margin-top: 25px;
+            padding: 14px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00d4ff, #0066cc);
+            color: white;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 5px 20px rgba(0,100,200,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px rgba(0,150,255,0.6);
+        }
+
+        button:disabled {
+            background: linear-gradient(135deg, #555, #333);
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .timer {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            color: #ffaa44;
+            padding: 12px;
+            border-radius: 50px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255,170,68,0.3);
+        }
+
+        .timer.ready {
+            background: rgba(0,100,0,0.6);
+            color: #88ff88;
+            border-color: #88ff88;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #fff;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top: 3px solid #00d4ff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <div class="loading" id="loadingDiv">
+            <div class="spinner"></div>
+            <div style="font-size: 1rem; letter-spacing: 2px;">جاري تحميل بياناتك...</div>
+        </div>
+        
+        <div id="wheelContent" style="display: none;">
+            <div class="title">
+                <h1>DR.DOOM</h1>
+                <div class="subtitle">⚡ SPIN & WIN ⚡</div>
+            </div>
+            
+            <div class="wheel-wrapper">
+                <div class="pointer" id="pointer">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 0 L58 35 L50 30 L42 35 Z" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+                        <path d="M50 0 L55 40 L50 35 L45 40 Z" fill="#FFF" opacity="0.6"/>
+                        <circle cx="50" cy="50" r="8" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+                    </svg>
+                </div>
+                <canvas id="wheel" width="320" height="320"></canvas>
+                <div class="wheel-center">
+                    <img src="https://i.postimg.cc/MT3GBzCy/IMG-20260428-202815-764.jpg" alt="logo" id="centerLogo">
+                </div>
+            </div>
+            
+            <button id="spinBtn" style="display: none;">⚡ أدر العجلة ⚡</button>
+            <div class="timer" id="timer"></div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.MainButton.hide();
+
+        const BACKGROUND_IMAGE_URL = "https://www.transparenttextures.com/containers/75/75b5c3c7-7b1b-4c3e-8e3c-7b5c3e8e3c7e.png";
+        const CENTER_LOGO_URL = "https://i.postimg.cc/MT3GBzCy/IMG-20260428-202815-764.jpg";
+
+        document.body.style.backgroundImage = `url('${BACKGROUND_IMAGE_URL}'), linear-gradient(135deg, #0a0a2a 0%, #1a1a4a 50%, #0a0a2a 100%)`;
+        document.body.style.backgroundBlendMode = "overlay";
+        document.body.style.backgroundSize = "cover, auto";
+        document.body.style.backgroundRepeat = "repeat, no-repeat";
+        document.body.style.backgroundPosition = "center";
+
+        const centerLogo = document.getElementById('centerLogo');
+        if (centerLogo) {
+            centerLogo.src = CENTER_LOGO_URL;
+            centerLogo.onerror = () => {
+                centerLogo.src = "https://i.postimg.cc/MT3GBzCy/IMG-20260428-202815-764.jpg";
+            };
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedData = urlParams.get('data');
+        let userData = null;
+        
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spinBtn');
+        const loadingDiv = document.getElementById('loadingDiv');
+        const wheelContent = document.getElementById('wheelContent');
+        
+        // جميع الجوائز الثابتة أضيف لها 00
+        const segments = ["5000 ل.س", "10000 ل.س", "50000 ل.س", "100000 ل.س", "5%", "25%"];
+        
+        const baseColors = ["#1a5c9e", "#ffffff", "#1a5c9e", "#ffffff", "#1a5c9e", "#ffffff"];
+        const crackColors = ["#0d3b66", "#e8e8e8", "#0d3b66", "#e8e8e8", "#0d3b66", "#e8e8e8"];
+        
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        if (encodedData) {
+            try {
+                const decodedData = atob(encodedData.replace(/-/g, '+').replace(/_/g, '/'));
+                userData = JSON.parse(decodedData);
+                console.log('User Data loaded:', userData);
+                loadingDiv.style.display = 'none';
+                wheelContent.style.display = 'block';
+                
+                drawWheel();
+                checkAndShowSpinButton();
+                
+            } catch(e) {
+                console.error('Error decoding data:', e);
+                loadingDiv.innerHTML = '<div style="color: #ff6666;">❌ خطأ في تحميل البيانات</div>';
+            }
+        } else {
+            loadingDiv.innerHTML = '<div style="color: #ff6666;">❌ لا توجد بيانات متاحة</div>';
+        }
+
+        function drawWheel() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2;
+            const sliceAngle = (2 * Math.PI) / segments.length;
+            
+            for (let i = 0; i < segments.length; i++) {
+                const startAngle = i * sliceAngle;
+                const endAngle = (i + 1) * sliceAngle;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                
+                const gradient = ctx.createLinearGradient(
+                    centerX + Math.cos(startAngle) * radius * 0.3,
+                    centerY + Math.sin(startAngle) * radius * 0.3,
+                    centerX + Math.cos(endAngle) * radius * 0.7,
+                    centerY + Math.sin(endAngle) * radius * 0.7
+                );
+                gradient.addColorStop(0, baseColors[i]);
+                gradient.addColorStop(0.7, crackColors[i]);
+                gradient.addColorStop(1, baseColors[i]);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                ctx.strokeStyle = "rgba(0,0,0,0.15)";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.clip();
+                
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(0,0,0,${0.1 + Math.random() * 0.15})`;
+                ctx.lineWidth = 1;
+                
+                for (let c = 0; c < 4; c++) {
+                    const angle = startAngle + Math.random() * sliceAngle;
+                    const dist1 = radius * (0.2 + Math.random() * 0.3);
+                    const dist2 = radius * (0.5 + Math.random() * 0.4);
+                    const x1 = centerX + Math.cos(angle) * dist1;
+                    const y1 = centerY + Math.sin(angle) * dist1;
+                    const x2 = centerX + Math.cos(angle + (Math.random() - 0.5) * 0.3) * dist2;
+                    const y2 = centerY + Math.sin(angle + (Math.random() - 0.5) * 0.3) * dist2;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+            }
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.15, 0, 2 * Math.PI);
+            ctx.fillStyle = "#FFD700";
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius - 2, 0, 2 * Math.PI);
+            ctx.strokeStyle = "rgba(255,215,0,0.5)";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius - 8, 0, 2 * Math.PI);
+            ctx.strokeStyle = "rgba(255,255,255,0.3)";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        function canSpin() {
+            if (!userData) return false;
+            if (userData.first_use === 1) {
+                console.log('First time user - can spin');
+                return true;
+            }
+            
+            const lastSpin = userData.last_spin;
+            if (!lastSpin) return true;
+            
+            const lastSpinDate = new Date(lastSpin);
+            const now = new Date();
+            const hoursDiff = (now - lastSpinDate) / (1000 * 60 * 60);
+            
+            return hoursDiff >= 48;
+        }
+        
+        function getRemainingTime() {
+            if (!userData) return null;
+            if (userData.first_use === 1) return null;
+            
+            const lastSpin = userData.last_spin;
+            if (!lastSpin) return null;
+            
+            const lastSpinDate = new Date(lastSpin);
+            const now = new Date();
+            const hoursPassed = (now - lastSpinDate) / (1000 * 60 * 60);
+            
+            if (hoursPassed >= 48) return null;
+            
+            const remainingMs = (48 * 60 * 60 * 1000) - (now - lastSpinDate);
+            const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
+            const remainingMinutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+            const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
+            
+            return { hours: remainingHours, minutes: remainingMinutes, seconds: remainingSeconds };
+        }
+        
+        function checkAndShowSpinButton() {
+            const timerDiv = document.getElementById('timer');
+            
+            if (!userData) {
+                spinBtn.style.display = 'none';
+                timerDiv.className = 'timer';
+                timerDiv.innerHTML = '⏳ جاري التحقق من بياناتك...';
+                return;
+            }
+            
+            if (canSpin()) {
+                spinBtn.style.display = 'block';
+                timerDiv.className = 'timer ready';
+                timerDiv.innerHTML = '⚡✅ يمكنك التدوير الآن! اضغط على الزر أعلاه ✅⚡';
+                console.log('Spin button shown - user can spin');
+            } else {
+                spinBtn.style.display = 'none';
+                const remaining = getRemainingTime();
+                if (remaining) {
+                    timerDiv.className = 'timer';
+                    timerDiv.innerHTML = `⏰ لا يمكنك التدوير الآن!<br>⚡ الوقت المتبقي: ${remaining.hours} ساعة و ${remaining.minutes} دقيقة و ${remaining.seconds} ثانية ⚡`;
+                    
+                    setTimeout(() => {
+                        checkAndShowSpinButton();
+                    }, 1000);
+                }
+            }
+        }
+
+        function determineResult() {
+            if (!userData) return "5%";
+            
+            const spinCount = userData.spin_count || 0;
+            const totalRecharge = userData.total_recharge || 0;
+            const totalWithdraw = userData.total_withdraw || 0;
+            
+            if (spinCount === 0) return "25%";
+            
+            if (spinCount === 1) {
+                if (totalRecharge > 0) {
+                    return "5000 ل.س";
+                } else {
+                    return "5%";
+                }
+            }
+            
+            if (spinCount === 2) return "5%";
+            
+            if (totalRecharge > 250000) return "10000 ل.س";
+            if (totalRecharge > 700000 && totalWithdraw <= 200000) return "50000 ل.س";
+            if (totalRecharge > 1800000 && totalWithdraw <= 400000) return "100000 ل.س";
+            
+            return "5%";
+        }
+
+        spinBtn.addEventListener('click', () => {
+            if (isSpinning) return;
+            if (!canSpin()) {
+                checkAndShowSpinButton();
+                return;
+            }
+            
+            isSpinning = true;
+            spinBtn.disabled = true;
+            
+            const result = determineResult();
+            console.log('Spinning for result:', result);
+            
+            const resultIndex = segments.findIndex(seg => seg === result);
+            const sliceAngle = 360 / segments.length;
+            const targetAngle = 270;
+            const currentAngle = currentRotation % 360;
+            const resultCenterAngle = (resultIndex * sliceAngle + sliceAngle / 2);
+            let neededRotation = (targetAngle - resultCenterAngle + 360) % 360;
+            const fullRotations = 5 * 360;
+            const extraDegree = neededRotation + fullRotations;
+            
+            currentRotation += extraDegree;
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                let resultType = "";
+                let resultValue = "";
+                
+                if (result.includes("%")) {
+                    resultType = "bonus_percent";
+                    resultValue = parseInt(result);
+                } else if (result.includes("ل.س")) {
+                    resultType = "direct_bonus";
+                    resultValue = parseInt(result);
+                }
+                
+                tg.sendData(JSON.stringify({
+                    action: "spin_result",
+                    result: result,
+                    result_type: resultType,
+                    result_value: resultValue
+                }));
+                
+                setTimeout(() => {
+                    tg.close();
+                }, 1500);
+                
+                isSpinning = false;
+            }, 4000);
+        });
+    </script>
+</body>
+</html>
